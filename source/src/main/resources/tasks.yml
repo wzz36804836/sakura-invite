@@ -1,0 +1,302 @@
+# SakuraInvite v1.0.1 默认任务池（共 50 个任务）
+# 系统会从 enabled: true 的任务中无重复抽取。
+# type 可用：ONLINE_MINUTES、LEVEL、KILL、BLOCK_BREAK、PLANT、FISH
+# KILL/BLOCK_BREAK/PLANT 的 targets 填 Bukkit EntityType/Material；留空表示任意目标。
+tasks:
+  # ==================== 在线任务（1-5） ====================
+  online_15:
+    enabled: true
+    type: ONLINE_MINUTES
+    target: 15
+    name: "累计在线满 15 分钟"
+  online_30:
+    enabled: true
+    type: ONLINE_MINUTES
+    target: 30
+    name: "累计在线满 30 分钟"
+  online_45:
+    enabled: true
+    type: ONLINE_MINUTES
+    target: 45
+    name: "累计在线满 45 分钟"
+  online_60:
+    enabled: true
+    type: ONLINE_MINUTES
+    target: 60
+    name: "累计在线满 60 分钟"
+  online_90:
+    enabled: true
+    type: ONLINE_MINUTES
+    target: 90
+    name: "累计在线满 90 分钟"
+
+  # ==================== 等级任务（6-10） ====================
+  level_10:
+    enabled: true
+    type: LEVEL
+    target: 10
+    name: "经验等级达到 10 级"
+  level_15:
+    enabled: true
+    type: LEVEL
+    target: 15
+    name: "经验等级达到 15 级"
+  level_20:
+    enabled: true
+    type: LEVEL
+    target: 20
+    name: "经验等级达到 20 级"
+  level_25:
+    enabled: true
+    type: LEVEL
+    target: 25
+    name: "经验等级达到 25 级"
+  level_30:
+    enabled: true
+    type: LEVEL
+    target: 30
+    name: "经验等级达到 30 级"
+
+  # ==================== 击杀任务（11-30） ====================
+  kill_zombie_10:
+    enabled: true
+    type: KILL
+    target: 10
+    targets: [ZOMBIE]
+    name: "击杀 10 只僵尸"
+  kill_zombie_20:
+    enabled: true
+    type: KILL
+    target: 20
+    targets: [ZOMBIE]
+    name: "击杀 20 只僵尸"
+  kill_skeleton_10:
+    enabled: true
+    type: KILL
+    target: 10
+    targets: [SKELETON]
+    name: "击杀 10 只骷髅"
+  kill_skeleton_20:
+    enabled: true
+    type: KILL
+    target: 20
+    targets: [SKELETON]
+    name: "击杀 20 只骷髅"
+  kill_creeper_10:
+    enabled: true
+    type: KILL
+    target: 10
+    targets: [CREEPER]
+    name: "击杀 10 只苦力怕"
+  kill_spider_15:
+    enabled: true
+    type: KILL
+    target: 15
+    targets: [SPIDER, CAVE_SPIDER]
+    name: "击杀 15 只蜘蛛"
+  kill_drowned_10:
+    enabled: true
+    type: KILL
+    target: 10
+    targets: [DROWNED]
+    name: "击杀 10 只溺尸"
+  kill_husk_10:
+    enabled: true
+    type: KILL
+    target: 10
+    targets: [HUSK]
+    name: "击杀 10 只尸壳"
+  kill_stray_10:
+    enabled: true
+    type: KILL
+    target: 10
+    targets: [STRAY]
+    name: "击杀 10 只流浪者"
+  kill_witch_5:
+    enabled: true
+    type: KILL
+    target: 5
+    targets: [WITCH]
+    name: "击杀 5 只女巫"
+  kill_enderman_8:
+    enabled: true
+    type: KILL
+    target: 8
+    targets: [ENDERMAN]
+    name: "击杀 8 只末影人"
+  kill_slime_15:
+    enabled: true
+    type: KILL
+    target: 15
+    targets: [SLIME]
+    name: "击杀 15 只史莱姆"
+  kill_blaze_10:
+    enabled: true
+    type: KILL
+    target: 10
+    targets: [BLAZE]
+    name: "击杀 10 只烈焰人"
+  kill_magma_cube_10:
+    enabled: true
+    type: KILL
+    target: 10
+    targets: [MAGMA_CUBE]
+    name: "击杀 10 只岩浆怪"
+  kill_pillager_10:
+    enabled: true
+    type: KILL
+    target: 10
+    targets: [PILLAGER]
+    name: "击杀 10 名掠夺者"
+  kill_zombified_piglin_15:
+    enabled: true
+    type: KILL
+    target: 15
+    targets: [ZOMBIFIED_PIGLIN]
+    name: "击杀 15 只僵尸猪灵"
+  kill_phantom_5:
+    enabled: true
+    type: KILL
+    target: 5
+    targets: [PHANTOM]
+    name: "击杀 5 只幻翼"
+  kill_guardian_8:
+    enabled: true
+    type: KILL
+    target: 8
+    targets: [GUARDIAN]
+    name: "击杀 8 只守卫者"
+  kill_undead_30:
+    enabled: true
+    type: KILL
+    target: 30
+    targets: [ZOMBIE, SKELETON, DROWNED, HUSK, STRAY, ZOMBIE_VILLAGER]
+    name: "击杀 30 只亡灵生物"
+  kill_any_40:
+    enabled: true
+    type: KILL
+    target: 40
+    name: "击杀任意 40 只生物"
+
+  # ==================== 挖掘与采集任务（31-42） ====================
+  mine_coal_30:
+    enabled: true
+    type: BLOCK_BREAK
+    target: 30
+    targets: [COAL_ORE, DEEPSLATE_COAL_ORE]
+    name: "挖掘 30 个煤矿石"
+  mine_iron_25:
+    enabled: true
+    type: BLOCK_BREAK
+    target: 25
+    targets: [IRON_ORE, DEEPSLATE_IRON_ORE]
+    name: "挖掘 25 个铁矿石"
+  mine_copper_30:
+    enabled: true
+    type: BLOCK_BREAK
+    target: 30
+    targets: [COPPER_ORE, DEEPSLATE_COPPER_ORE]
+    name: "挖掘 30 个铜矿石"
+  mine_gold_15:
+    enabled: true
+    type: BLOCK_BREAK
+    target: 15
+    targets: [GOLD_ORE, DEEPSLATE_GOLD_ORE, NETHER_GOLD_ORE]
+    name: "挖掘 15 个金矿石"
+  mine_redstone_20:
+    enabled: true
+    type: BLOCK_BREAK
+    target: 20
+    targets: [REDSTONE_ORE, DEEPSLATE_REDSTONE_ORE]
+    name: "挖掘 20 个红石矿石"
+  mine_lapis_12:
+    enabled: true
+    type: BLOCK_BREAK
+    target: 12
+    targets: [LAPIS_ORE, DEEPSLATE_LAPIS_ORE]
+    name: "挖掘 12 个青金石矿石"
+  mine_diamond_8:
+    enabled: true
+    type: BLOCK_BREAK
+    target: 8
+    targets: [DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE]
+    name: "挖掘 8 个钻石矿石"
+  mine_any_40:
+    enabled: true
+    type: BLOCK_BREAK
+    target: 40
+    targets: [COAL_ORE, DEEPSLATE_COAL_ORE, COPPER_ORE, DEEPSLATE_COPPER_ORE, IRON_ORE, DEEPSLATE_IRON_ORE, GOLD_ORE, DEEPSLATE_GOLD_ORE, REDSTONE_ORE, DEEPSLATE_REDSTONE_ORE, LAPIS_ORE, DEEPSLATE_LAPIS_ORE, DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE, EMERALD_ORE, DEEPSLATE_EMERALD_ORE]
+    name: "挖掘任意 40 个矿石"
+  chop_logs_40:
+    enabled: true
+    type: BLOCK_BREAK
+    target: 40
+    targets: [OAK_LOG, SPRUCE_LOG, BIRCH_LOG, JUNGLE_LOG, ACACIA_LOG, DARK_OAK_LOG, MANGROVE_LOG, CHERRY_LOG, PALE_OAK_LOG, CRIMSON_STEM, WARPED_STEM]
+    name: "砍伐 40 个原木"
+  dig_sand_50:
+    enabled: true
+    type: BLOCK_BREAK
+    target: 50
+    targets: [SAND, RED_SAND]
+    name: "挖掘 50 个沙子"
+  dig_gravel_40:
+    enabled: true
+    type: BLOCK_BREAK
+    target: 40
+    targets: [GRAVEL]
+    name: "挖掘 40 个沙砾"
+  mine_netherrack_80:
+    enabled: true
+    type: BLOCK_BREAK
+    target: 80
+    targets: [NETHERRACK]
+    name: "挖掘 80 个下界岩"
+
+  # ==================== 种植任务（43-47） ====================
+  plant_wheat_30:
+    enabled: true
+    type: PLANT
+    target: 30
+    targets: [WHEAT]
+    name: "种植 30 株小麦"
+  plant_carrot_potato_30:
+    enabled: true
+    type: PLANT
+    target: 30
+    targets: [CARROTS, POTATOES]
+    name: "种植 30 株胡萝卜或马铃薯"
+  plant_beetroot_25:
+    enabled: true
+    type: PLANT
+    target: 25
+    targets: [BEETROOTS]
+    name: "种植 25 株甜菜根"
+  plant_nether_wart_25:
+    enabled: true
+    type: PLANT
+    target: 25
+    targets: [NETHER_WART]
+    name: "种植 25 株下界疣"
+  plant_any_50:
+    enabled: true
+    type: PLANT
+    target: 50
+    targets: [WHEAT, CARROTS, POTATOES, BEETROOTS, NETHER_WART, COCOA, MELON_STEM, PUMPKIN_STEM]
+    name: "种植任意 50 株作物"
+
+  # ==================== 钓鱼任务（48-50） ====================
+  fish_5:
+    enabled: true
+    type: FISH
+    target: 5
+    name: "成功钓鱼 5 次"
+  fish_10:
+    enabled: true
+    type: FISH
+    target: 10
+    name: "成功钓鱼 10 次"
+  fish_20:
+    enabled: true
+    type: FISH
+    target: 20
+    name: "成功钓鱼 20 次"

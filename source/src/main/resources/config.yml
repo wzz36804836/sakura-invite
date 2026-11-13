@@ -1,0 +1,45 @@
+# MySQL（可选；无法连接时自动改用本地 SQLite）
+mysql:
+  host: 127.0.0.1
+  port: 3306
+  database: sakurainvite
+  username: root
+  password: REDACTED
+  parameters: "useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true"
+  pool-size: 10
+  # MySQL 无法连接时自动使用 plugins/SakuraInvite/SakuraInvite.db。
+  fallback-to-sqlite: true
+
+sqlite:
+  file: "SakuraInvite.db"
+
+invite-code:
+  prefix: "SAKURATREE-"
+  random-length: 10
+  alphabet: "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+
+tasks:
+  count: 3
+  progress-save-cooldown-seconds: 2
+
+anti-abuse:
+  enabled: true
+  # 同一邀请人可从同一 IP 产生的绑定上限；家庭服可调大，0 表示不限制。
+  max-bindings-per-inviter-ip: 1
+  block-same-ip-as-inviter: true
+
+rewards:
+  inviter-commands:
+    - "points give %player_name% 100"
+    - "say 恭喜 %player_name% 完成了一次有效邀请！"
+  # 官方邀请码奖励改为在 /invite admin official 管理界面中逐个设置。
+
+gui:
+  title: "<gradient:#ff8fbd:#ffd5e5>樱花邀请中心</gradient>"
+  create-title: "<gradient:#ff8fbd:#ffd5e5>设置邀请奖励</gradient>"
+
+messages:
+  prefix: "<gray>[<light_purple>SakuraInvite</light_purple>]</gray> "
+  database-not-ready: "<red>数据库尚未连接，请联系管理员。</red>"
+  no-permission: "<red>你没有权限执行这个操作。</red>"
+  player-only: "<red>此命令只能由玩家执行。</red>"

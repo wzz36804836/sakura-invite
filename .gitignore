@@ -1,0 +1,10 @@
+.env
+.env.*
+*.key
+*.pem
+.gradle/
+.idea/
+node_modules/
+__pycache__/
+target/
+build/

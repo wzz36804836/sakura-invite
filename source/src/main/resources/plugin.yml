@@ -1,0 +1,22 @@
+name: SakuraInvite
+version: '${version}'
+main: site.sakuragirl.sakurainvite.SakuraInvitePlugin
+api-version: '1.21.11'
+folia-supported: true
+author: Sakura_Girl
+description: 樱花树下玩家邀请与成长任务系统
+softdepend: [Vault, XConomy, CraftEngine, PlaceholderAPI]
+commands:
+  invite:
+    aliases: [si, sakurainvite]
+    description: 打开邀请中心或使用邀请码
+    usage: /invite <help|gui|create|use|records|top|admin|reload>
+permissions:
+  sakurainvite.use:
+    default: true
+  sakurainvite.create:
+    default: true
+  sakurainvite.admin:
+    default: op
+  sakurainvite.reload:
+    default: op
