@@ -1,88 +1,189 @@
 package site.sakuragirl.sakurainvite.service;
 
-import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
+import java.net.InetSocketAddress;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 import site.sakuragirl.sakurainvite.SakuraInvitePlugin;
 import site.sakuragirl.sakurainvite.db.Database;
 import site.sakuragirl.sakurainvite.hook.EconomyHook;
 import site.sakuragirl.sakurainvite.model.Models.*;
 import site.sakuragirl.sakurainvite.task.TaskRegistry;
-import site.sakuragirl.sakurainvite.util.ItemCodec;
-
-import java.math.BigDecimal;
-import java.net.InetSocketAddress;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
 
 public final class InviteService {
-    private final SakuraInvitePlugin plugin; private final Database db; private final TaskRegistry tasks; private final EconomyHook economy;
-    public InviteService(SakuraInvitePlugin plugin,Database db,TaskRegistry tasks,EconomyHook economy){this.plugin=plugin;this.db=db;this.tasks=tasks;this.economy=economy;}
-    public String ip(Player p){InetSocketAddress a=p.getAddress();return a==null||a.getAddress()==null?null:a.getAddress().getHostAddress();}
+  private record Key(TaskType type, String target) {}
 
-    public CompletableFuture<String> create(Player p,BigDecimal money,byte[] items){
-        if(money.signum()>0&&!economy.available())return CompletableFuture.completedFuture("<red>经济服务未连接，无法设置金币奖励。</red>");
-        if(money.signum()>0&&!economy.has(p,money))return CompletableFuture.completedFuture("<red>余额不足，需要 "+money.toPlainString()+" 金币。</red>");
-        if(money.signum()>0&&!economy.withdraw(p,money))return CompletableFuture.completedFuture("<red>金币扣款失败，请稍后重试。</red>");
-        String code=randomCode(); InviteCode value=new InviteCode(code,CodeType.PERSONAL,p.getUniqueId(),p.getName(),money,items,List.of(),true,ip(p));
-        CompletableFuture<String> result=new CompletableFuture<>();
-        db.createPersonal(value).whenComplete((ok,error)->plugin.runPlayer(p,()->{
-            if(error!=null||!ok){if(money.signum()>0)economy.deposit(p,money);if(error!=null)plugin.logError("创建个人邀请码失败",error);result.complete("<red>创建失败；你可能已经拥有邀请码，已退还托管金币。</red>");}
-            else result.complete("<green>创建成功！已托管 <yellow>"+money.toPlainString()+"</yellow> 金币。你的专属邀请码：</green>"+
-                    "<click:copy_to_clipboard:'"+code+"'><hover:show_text:'<green>点击复制邀请码</green>'>"+
-                    "<yellow><underlined>"+code+"</underlined></yellow></hover></click>"+
-                    " <gray>（点击复制）</gray>");
-        }));return result;
-    }
-    private String randomCode(){String prefix=plugin.getConfig().getString("invite-code.prefix","SI-");String alphabet=plugin.getConfig().getString("invite-code.alphabet","ABCDEFGHJKLMNPQRSTUVWXYZ23456789");int n=plugin.getConfig().getInt("invite-code.random-length",8);StringBuilder b=new StringBuilder(prefix);java.security.SecureRandom r=new java.security.SecureRandom();for(int i=0;i<n;i++)b.append(alphabet.charAt(r.nextInt(alphabet.length())));return b.toString();}
+  private final SakuraInvitePlugin plugin;
+  private final Database db;
+  private final TaskRegistry tasks;
+  private final Set<UUID> active = new HashSet<>();
+  private final Map<UUID, Map<Key, Integer>> pending = new HashMap<>();
+  private final Set<UUID> checking = new HashSet<>();
+  private final java.security.SecureRandom random = new java.security.SecureRandom();
 
-    public CompletableFuture<String> use(Player p,String raw){
-        int currentLevel=p.getLevel();UUID playerId=p.getUniqueId();String playerName=p.getName();String playerIp=ip(p);
-        return db.findCode(raw).thenCompose(code->{
-            if(code==null)return CompletableFuture.completedFuture("<red>邀请码不存在或已停用。</red>");
-            if(code.type()==CodeType.OFFICIAL)return useOfficial(p,playerId,playerName,playerIp,code);
-            if(tasks.size()<plugin.getConfig().getInt("tasks.count",3))return CompletableFuture.completedFuture("<red>可用任务数量不足，请联系管理员检查 tasks.yml。</red>");
-            int max=plugin.getConfig().getBoolean("anti-abuse.enabled",true)?plugin.getConfig().getInt("anti-abuse.max-bindings-per-inviter-ip",1):0;
-            boolean same=plugin.getConfig().getBoolean("anti-abuse.enabled",true)&&plugin.getConfig().getBoolean("anti-abuse.block-same-ip-as-inviter",true);
-            return db.bindPersonal(code,playerId,playerName,playerIp,tasks.random(plugin.getConfig().getInt("tasks.count",3)),max,same).thenApply(r->{if(r.success())plugin.runPlayer(p,()->progress(p,TaskType.LEVEL,"",currentLevel));return r.success()?"<green>"+r.message()+"。</green>":"<red>"+r.message()+"。</red>";});
-        });
-    }
+  public InviteService(
+      SakuraInvitePlugin plugin, Database db, TaskRegistry tasks, EconomyHook ignored) {
+    this.plugin = plugin;
+    this.db = db;
+    this.tasks = tasks;
+  }
 
-    private CompletableFuture<String> useOfficial(Player p,UUID playerId,String playerName,String playerIp,InviteCode code){
-        if(code.money().signum()>0&&!economy.available())return CompletableFuture.completedFuture("<red>经济服务未连接，暂时无法领取这个官方邀请码。</red>");
-        CompletableFuture<String> result=new CompletableFuture<>();
-        db.claimOfficial(code.code(),playerId,playerName,playerIp).whenComplete((ok,error)->{
-            if(error!=null){result.completeExceptionally(error);return;}if(!ok){result.complete("<red>你已经领取过这个官方邀请码。</red>");return;}
-            plugin.runPlayer(p,()->{
-                List<ItemStack> rewardItems;try{rewardItems=ItemCodec.decode(code.items());}catch(Exception ex){plugin.logError("官方邀请码物品读取失败",ex);db.unclaimOfficial(code.code(),playerId);result.complete("<red>奖励物品读取失败，领取记录已撤销。</red>");return;}
-                if(!p.isOnline()||(code.money().signum()>0&&!economy.deposit(p,code.money()))){db.unclaimOfficial(code.code(),playerId);result.complete("<red>奖励发放失败，本次领取记录已撤销，请稍后重试。</red>");return;}
-                for(ItemStack item:rewardItems){Map<Integer,ItemStack> overflow=p.getInventory().addItem(item);overflow.values().forEach(i->p.getWorld().dropItemNaturally(p.getLocation(),i));}
-                runCommands(code.commands(),playerName,code.code());result.complete("<green>官方邀请码领取成功，奖励已经发放！</green>");
+  public String ip(Player p) {
+    InetSocketAddress a = p.getAddress();
+    return a == null || a.getAddress() == null ? null : a.getAddress().getHostAddress();
+  }
+
+  public String randomCode() {
+    String prefix =
+        plugin.getConfig().getString("invite-code.prefix", "SAKURATREE-").toUpperCase(Locale.ROOT);
+    String alphabet =
+        plugin
+            .getConfig()
+            .getString("invite-code.alphabet", "ABCDEFGHJKLMNPQRSTUVWXYZ23456789")
+            .toUpperCase(Locale.ROOT);
+    int n = plugin.getConfig().getInt("invite-code.random-length", 10);
+    if (!prefix.matches("[A-Z0-9_-]*")
+        || !alphabet.matches("[A-Z0-9]+")
+        || n < 6
+        || n > 24
+        || prefix.length() + n > 32) throw new IllegalArgumentException("邀请码前缀、字符集或长度配置不合法");
+    StringBuilder result = new StringBuilder(prefix);
+    for (int i = 0; i < n; i++) result.append(alphabet.charAt(random.nextInt(alphabet.length())));
+    return result.toString();
+  }
+
+  public CompletableFuture<String> use(Player p, String raw) {
+    if (!raw.matches("[A-Za-z0-9_-]{3,32}"))
+      return CompletableFuture.completedFuture("<red>邀请码格式不正确。</red>");
+    int level = p.getLevel();
+    UUID id = p.getUniqueId();
+    String name = p.getName(), ip = ip(p);
+    int count = plugin.getConfig().getInt("tasks.count", 3);
+    boolean anti = plugin.getConfig().getBoolean("anti-abuse.enabled", true);
+    int max =
+        anti
+            ? Math.max(0, plugin.getConfig().getInt("anti-abuse.max-bindings-per-inviter-ip", 1))
+            : 0;
+    boolean block =
+        anti && plugin.getConfig().getBoolean("anti-abuse.block-same-ip-as-inviter", true);
+    List<TaskDefinition> chosen = tasks.random(count);
+    return db.findCode(raw)
+        .thenCompose(
+            code -> {
+              if (code == null)
+                return CompletableFuture.completedFuture("<red>邀请码不存在、未发布或已停用。</red>");
+              if (code.type() == CodeType.OFFICIAL)
+                return db.queueOfficial(code.code(), id, name, ip)
+                    .thenApply(
+                        result -> {
+                          if (result.equals("OK")) {
+                            plugin.runGlobal(() -> plugin.delivery().poll(p));
+                            return "<green>奖励已加入待领取列表，系统会尝试发放。</green>";
+                          }
+                          return "<yellow>" + result + "。</yellow>";
+                        });
+              if (count < 1 || chosen.size() != count)
+                return CompletableFuture.completedFuture("<red>有效任务数量不足。</red>");
+              return db.bindPersonal(code, id, name, ip, chosen, max, block)
+                  .thenApply(
+                      result -> {
+                        if (result.success())
+                          plugin.runGlobal(
+                              () -> {
+                                if (p.isOnline()) {
+                                  active.add(id);
+                                  progress(p, TaskType.LEVEL, "", level);
+                                }
+                              });
+                        return (result.success() ? "<green>" : "<yellow>") + result.message() + "。";
+                      });
             });
-        });return result;
-    }
+  }
 
-    public void progress(Player player,TaskType type,String key,int amount){
-        if(!db.ready())return;
-        db.progress(player.getUniqueId(),type,key==null?"":key,amount,tasks).thenAccept(result->{if(result.justCompleted())claim(result.relationId());}).exceptionally(ex->{plugin.logError("保存任务进度失败",ex);return null;});
-    }
+  public void progress(Player p, TaskType type, String target, int amount) {
+    if (!db.ready() || !active.contains(p.getUniqueId())) return;
+    Key key = new Key(type, target == null ? "" : target);
+    Map<Key, Integer> values = pending.computeIfAbsent(p.getUniqueId(), ignored -> new HashMap<>());
+    values.merge(
+        key,
+        amount,
+        (a, b) -> type == TaskType.LEVEL ? Math.max(a, b) : (int) Math.min(1000000L, (long) a + b));
+  }
 
-    public void claim(long relationId){
-        db.claimBundle(relationId).thenAccept(bundle->{if(bundle==null)return;plugin.runGlobal(()->{Player player=Bukkit.getPlayer(bundle.inviteeUuid());if(player==null){db.unclaim(bundle.relationId());return;}plugin.runPlayer(player,()->grant(bundle,player));});}).exceptionally(ex->{plugin.logError("读取奖励失败",ex);return null;});
-    }
-    private void grant(Database.ClaimBundle bundle,Player p){
-        InviteCode code=bundle.code(); OfflinePlayer receiver=p;
-        List<ItemStack> rewardItems;try{rewardItems=ItemCodec.decode(code.items());}catch(Exception e){plugin.logError("反序列化个人邀请码奖励失败",e);db.unclaim(bundle.relationId());plugin.message(p,"<red>奖励物品读取失败，请联系管理员。</red>");return;}
-        if(code.money().signum()>0&&!economy.deposit(receiver,code.money())){
-            db.unclaim(bundle.relationId());plugin.message(p,"<red>金币奖励发放失败（经济插件未就绪），稍后登录会重试。</red>");return;
-        }
-        for(ItemStack item:rewardItems){Map<Integer,ItemStack> overflow=p.getInventory().addItem(item);overflow.values().forEach(i->p.getWorld().dropItemNaturally(p.getLocation(),i));}
-        plugin.message(p,"<green>全部成长任务已完成，邀请奖励已经发放！</green>");
-        runCommands(plugin.getConfig().getStringList("rewards.inviter-commands"),code.creatorName(),code.code());
-        plugin.runGlobal(()->{Player inviter=Bukkit.getPlayer(code.creatorUuid());if(inviter!=null)plugin.runPlayer(inviter,()->plugin.message(inviter,"<green>你邀请的玩家 <yellow>"+bundle.inviteeName()+"</yellow> 已完成全部任务！</green>"));});
-    }
-    private void runCommands(List<String> commands,String player,String code){plugin.runGlobal(()->commands.forEach(command->Bukkit.dispatchCommand(Bukkit.getConsoleSender(),command.replace("%player_name%",player).replace("%code%",code))));}
+  public void flush() {
+    if (!db.ready() || pending.isEmpty()) return;
+    Map<UUID, Map<Key, Integer>> batch = new HashMap<>(pending);
+    pending.clear();
+    for (var player : batch.entrySet())
+      for (var value : player.getValue().entrySet()) {
+        db.progress(
+                player.getKey(),
+                value.getKey().type(),
+                value.getKey().target(),
+                value.getValue(),
+                tasks)
+            .whenComplete(
+                (result, error) ->
+                    plugin.runGlobal(
+                        () -> {
+                          if (error != null) {
+                            pending
+                                .computeIfAbsent(player.getKey(), ignored -> new HashMap<>())
+                                .merge(
+                                    value.getKey(),
+                                    value.getValue(),
+                                    (a, b) ->
+                                        value.getKey().type() == TaskType.LEVEL
+                                            ? Math.max(a, b)
+                                            : (int) Math.min(1000000L, (long) a + b));
+                            plugin.logError("进度保存失败，将重试", error);
+                            return;
+                          }
+                          if (result.justCompleted()) {
+                            active.remove(player.getKey());
+                            claim(result.relationId());
+                          }
+                        }));
+      }
+  }
 
-    public void retryClaim(Player player){db.dashboard(player.getUniqueId(),tasks).thenAccept(d->{if(!d.tasks().isEmpty()&&d.tasks().stream().allMatch(TaskProgress::complete))claim(d.tasks().getFirst().relationId());});}
+  public void claim(long relation) {
+    List<String> commands =
+        List.copyOf(plugin.getConfig().getStringList("rewards.inviter-commands"));
+    db.queuePersonal(relation, commands)
+        .whenComplete(
+            (queued, error) -> {
+              if (error != null) plugin.logError("生成奖励待领取记录失败", error);
+            });
+  }
+
+  public void retryClaim(Player p) {
+    if (!db.ready() || !checking.add(p.getUniqueId())) return;
+    UUID id = p.getUniqueId();
+    db.dashboard(id, tasks)
+        .whenComplete(
+            (d, error) ->
+                plugin.runGlobal(
+                    () -> {
+                      checking.remove(id);
+                      if (error != null) {
+                        plugin.logError("加载成长任务失败", error);
+                        return;
+                      }
+                      if (!d.tasks().isEmpty()) {
+                        if (d.tasks().stream().allMatch(TaskProgress::complete))
+                          claim(d.tasks().getFirst().relationId());
+                        else {
+                          if (p.isOnline()) {
+                            active.add(id);
+                            progress(p, TaskType.LEVEL, "", p.getLevel());
+                          } else active.remove(id);
+                        }
+                      }
+                    }));
+  }
+
+  public void forget(UUID id) {
+    active.remove(id);
+  }
 }

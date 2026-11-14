@@ -1,10 +1,15 @@
+# SakuraInvite 1.3.0 — 仅 Paper 1.21.11 / Java 21，不支持 Folia。
+# 新装默认 SQLite；已有服务器请保持原数据源，切换不会自动迁移数据。
+# storage: sqlite | mysql | auto（auto 仅用于兼容旧配置，MySQL 连接失败可回退）
+storage: sqlite
+
 # MySQL（可选；无法连接时自动改用本地 SQLite）
 mysql:
   host: 127.0.0.1
   port: 3306
   database: sakurainvite
   username: root
-  password: REDACTED
+  password: ""
   parameters: "useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true"
   pool-size: 10
   # MySQL 无法连接时自动使用 plugins/SakuraInvite/SakuraInvite.db。
@@ -32,7 +37,7 @@ rewards:
   inviter-commands:
     - "points give %player_name% 100"
     - "say 恭喜 %player_name% 完成了一次有效邀请！"
-  # 官方邀请码奖励改为在 /invite admin official 管理界面中逐个设置。
+  # 官方码在管理界面保存后，需 /invite admin publish <码> 发布。
 
 gui:
   title: "<gradient:#ff8fbd:#ffd5e5>樱花邀请中心</gradient>"

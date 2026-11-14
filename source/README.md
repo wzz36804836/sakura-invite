@@ -1,14 +1,33 @@
-# SakuraInvite v1.2.1
+# SakuraInvite 1.3.0
 
-Paper/Folia 1.21.11 邀请系统，作者 Sakura_Girl。
+樱花邀请系统：玩家预存物品与金币，受邀玩家完成成长任务后领取奖励。支持个人邀请码、官方活动码、菜单、邀请记录、排行榜及 PlaceholderAPI。
 
-1. 可创建 MySQL 数据库并填写 `plugins/SakuraInvite/config.yml`；无法连接 MySQL 时会自动使用本地 `SakuraInvite.db`。
-2. 安装 XConomy 与 Vault（金币奖励需要）；CraftEngine 可选。
-3. 将 JAR 放入 `plugins` 后启动。数据表自动创建。
+适用 **Paper 1.21.11 / Java 21**，客户端无需模组，**不支持 Folia**。
 
-存储策略：优先连接 MySQL；连接失败且 `mysql.fallback-to-sqlite: true` 时，自动创建 `plugins/SakuraInvite/SakuraInvite.db`。SQLite 无需安装数据库服务。
+## 核心行为
 
-命令：`/invite help`、`/invite gui`、`/invite create`、`/invite use <码>`、`/invite records`、`/invite top`。
-管理：`/invite admin official`、`/invite admin createofficial <码>`、`/invite admin editofficial <码>`、`/invite admin deletecode <码>`、`/invite reload`。
+- 个人码按份预存奖励，绑定时预留一份；用完可补充，未预留的库存可退回。
+- 菜单复制奖励模板，确认时才收取实物；校验权限、余额和背包物品，保护菜单并拦截重复提交。
+- 持久化待领取奖励，离线或背包满时保留。预存日志与数据库操作编号支持重试；中断后无法确定是否已到账的操作交管理员核对。
+- 官方码草稿需手动发布，支持有效期、名额和单人领取限制。
+- 任务支持在线时间、等级、击杀、挖掘、成熟作物收获与钓鱼；玩家放置方块标记随区块保存。
 
-PlaceholderAPI：`%sakurainvite_code%`、`%sakurainvite_inviter%`、`%sakurainvite_invitees%`、`%sakurainvite_invitee_names%`、`%sakurainvite_invitee_1%`（1-20）、`%sakurainvite_valid_count%`、`%sakurainvite_rank%`、`%sakurainvite_task_progress%`。
+## 安装
+
+构建产物 `build/libs/SakuraInvite-1.3.0.jar` 放入服务端 `plugins/`。新装默认 SQLite，也支持 MySQL。金币需 Vault 与经济插件；PlaceholderAPI、CraftEngine 可选。默认邀请人点券命令需要对应插件，未安装时请修改 `rewards.inviter-commands` 或设为 `[]`。
+
+玩家使用 `/invite gui`，管理员使用 `/invite admin official`。详细命令、异常处理及配置见 [使用与升级说明](docs/使用与升级说明.md)。
+
+## 从旧版升级
+
+停服备份插件数据目录与 MySQL 数据库，再替换 JAR，保留原数据源。旧版无法可靠推算剩余库存，因此旧个人码库存从 0 开始；补充时优先填补旧待结算关系。不会自动扣旧玩家的钱，或自动重发旧版已领取记录。
+
+## 构建与验证
+
+```powershell
+.\gradlew.bat build
+```
+
+Java 21，Gradle 8.8。20 项 JUnit 回归测试覆盖金额、SQLite 迁移、有限库存、幂等预存/退款、并发绑定、官方码限制、发奖恢复及菜单保护。尚未完成实际 Paper、MySQL、Vault/XConomy 和 CraftEngine 联动测试；不保证外部经济或命令跨系统严格只执行一次，异常部分执行需人工核对。
+
+作者：Sakura_Girl。原作者许可保持不变。

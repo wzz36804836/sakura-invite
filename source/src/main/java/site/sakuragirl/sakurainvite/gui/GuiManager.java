@@ -1,83 +1,516 @@
 package site.sakuragirl.sakurainvite.gui;
 
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import org.bukkit.Bukkit;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
+import org.bukkit.event.*;
 import org.bukkit.event.inventory.*;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.*;
 import org.bukkit.inventory.meta.ItemMeta;
 import site.sakuragirl.sakurainvite.SakuraInvitePlugin;
-import site.sakuragirl.sakurainvite.model.Models.Dashboard;
-import site.sakuragirl.sakurainvite.model.Models.TaskProgress;
+import site.sakuragirl.sakurainvite.model.Models.*;
 import site.sakuragirl.sakurainvite.service.InviteService;
-import site.sakuragirl.sakurainvite.util.ItemCodec;
+import site.sakuragirl.sakurainvite.util.*;
 
-import java.math.BigDecimal;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-
+/**
+ * All displayed reward items are protected copies. Assets leave the player only at confirmation.
+ */
 @SuppressWarnings("deprecation")
 public final class GuiManager implements Listener {
-    private static final MiniMessage MM=MiniMessage.miniMessage();
-    private final SakuraInvitePlugin plugin;private final InviteService service;
-    private final Map<UUID,CreateSession> sessions=new ConcurrentHashMap<>();
-    public GuiManager(SakuraInvitePlugin plugin,InviteService service){this.plugin=plugin;this.service=service;}
-    private static final class CenterHolder implements InventoryHolder {public Inventory getInventory(){return null;}}
-    private static final class CreateHolder implements InventoryHolder {final UUID owner;CreateHolder(UUID owner){this.owner=owner;}public Inventory getInventory(){return null;}}
-    private static final class CreateSession {Inventory inventory;BigDecimal money=BigDecimal.ZERO;boolean editing;boolean submitting;}
+  private static final MiniMessage MM = MiniMessage.miniMessage();
 
-    public void openCenter(Player p){
-        if(!plugin.database().ready()){plugin.message(p,plugin.getConfig().getString("messages.database-not-ready"));return;}
-        plugin.database().dashboard(p.getUniqueId(),plugin.tasks()).thenAccept(data->plugin.runPlayer(p,()->renderCenter(p,data))).exceptionally(ex->{plugin.logError("读取邀请中心失败",ex);return null;});
-    }
-    private void renderCenter(Player p,Dashboard d){
-        Inventory inv=Bukkit.createInventory(new CenterHolder(),45,MM.deserialize(plugin.getConfig().getString("gui.title","樱花邀请中心")));
-        fill(inv);
-        inv.setItem(10,item(Material.NAME_TAG,"<light_purple>我的邀请码",List.of(d.ownCode()==null?"<gray>尚未创建":"<yellow>"+d.ownCode(),"<gray>点击创建/查看")));
-        List<String> taskLore=new ArrayList<>();if(d.tasks().isEmpty())taskLore.add("<gray>使用个人邀请码后生成");for(TaskProgress t:d.tasks())taskLore.add((t.complete()?"<green>✔ ":"<yellow>• ")+t.name()+" <white>"+Math.min(t.progress(),t.target())+"/"+t.target());
-        inv.setItem(12,item(Material.WRITABLE_BOOK,"<aqua>邀请任务",taskLore));
-        inv.setItem(14,item(Material.BOOK,"<gold>邀请记录",List.of("<gray>已邀请：<white>"+d.invitedCount(),"<gray>有效邀请：<green>"+d.validCount(),"<gray>点击查看最近记录")));
-        inv.setItem(16,item(Material.NETHER_STAR,"<yellow>邀请排行榜",List.of(d.rank()>0?"<gray>你的排名：<white>#"+d.rank():"<gray>完成有效邀请后上榜","<gray>点击查看前十名")));
-        inv.setItem(31,item(Material.PLAYER_HEAD,"<light_purple>邀请关系",List.of(d.inviterName()==null?"<gray>尚未绑定个人邀请码":"<gray>邀请人：<white>"+d.inviterName())));
-        p.openInventory(inv);
-    }
-    public void openCreate(Player p){
-        CreateSession existing=sessions.get(p.getUniqueId());if(existing!=null){p.openInventory(existing.inventory);return;}
-        CreateSession s=new CreateSession();Inventory inv=Bukkit.createInventory(new CreateHolder(p.getUniqueId()),54,MM.deserialize(plugin.getConfig().getString("gui.create-title","设置新人奖励")));s.inventory=inv;sessions.put(p.getUniqueId(),s);
-        decorateCreate(s);p.openInventory(inv);
-    }
-    private void decorateCreate(CreateSession s){
-        s.inventory.setItem(45,item(Material.BARRIER,"<red>取消并返还物品",List.of()));
-        s.inventory.setItem(49,item(Material.GOLD_INGOT,"<gold>设置金币奖励",List.of("<gray>当前：<yellow>"+s.money.toPlainString(),"<gray>点击后在聊天栏输入金额")));
-        s.inventory.setItem(52,item(Material.LIME_DYE,"<green>确认创建邀请码",List.of("<gray>上方 45 格可直接放入奖励物品","<gray>支持原版与 CraftEngine 物品")));
-        s.inventory.setItem(53,item(Material.PAPER,"<aqua>说明",List.of("<gray>新人完成全部任务后获得这些奖励","<gray>每位玩家只能创建一个个人邀请码")));
-    }
-    private void fill(Inventory inv){ItemStack pane=item(Material.PINK_STAINED_GLASS_PANE," ",List.of());for(int i=0;i<inv.getSize();i++)inv.setItem(i,pane);}
-    private ItemStack item(Material material,String name,List<String> lore){ItemStack stack=new ItemStack(material);ItemMeta meta=stack.getItemMeta();meta.itemName(MM.deserialize(name));if(!lore.isEmpty())meta.lore(lore.stream().map(MM::deserialize).toList());stack.setItemMeta(meta);return stack;}
+  private enum Kind {
+    CENTER,
+    INFO,
+    CREATE,
+    FUND
+  }
 
-    @EventHandler(ignoreCancelled=true) public void click(InventoryClickEvent e){
-        if(e.getInventory().getHolder() instanceof CenterHolder){e.setCancelled(true);if(!(e.getWhoClicked() instanceof Player p)||e.getClickedInventory()!=e.getView().getTopInventory())return;switch(e.getSlot()){case 10->{p.closeInventory();openCreate(p);}case 14->{p.closeInventory();plugin.showRecords(p);}case 16->{p.closeInventory();plugin.showTop(p);}default->{}}return;}
-        if(!(e.getInventory().getHolder() instanceof CreateHolder h))return;if(!(e.getWhoClicked() instanceof Player p)||!h.owner.equals(p.getUniqueId())){e.setCancelled(true);return;}
-        CreateSession s=sessions.get(h.owner);if(s==null)return;
-        if(e.getClickedInventory()==e.getView().getTopInventory()&&e.getSlot()>=45){e.setCancelled(true);if(e.getSlot()==45)cancel(p,s);else if(e.getSlot()==49){s.editing=true;p.closeInventory();plugin.message(p,"<yellow>请在聊天栏输入金币金额，输入 cancel 取消设置。</yellow>");}else if(e.getSlot()==52)submit(p,s);}
-        if(e.getAction()==InventoryAction.COLLECT_TO_CURSOR)e.setCancelled(true);
+  private static final class Holder implements InventoryHolder {
+    final Kind kind;
+    final UUID owner;
+
+    Holder(Kind kind, UUID owner) {
+      this.kind = kind;
+      this.owner = owner;
     }
-    @EventHandler public void drag(InventoryDragEvent e){if(e.getInventory().getHolder() instanceof CreateHolder&&e.getRawSlots().stream().anyMatch(i->i>=45&&i<54))e.setCancelled(true);}
-    @EventHandler public void close(InventoryCloseEvent e){if(!(e.getInventory().getHolder() instanceof CreateHolder h))return;CreateSession s=sessions.get(h.owner);if(s!=null&&!s.editing&&!s.submitting)cancel((Player)e.getPlayer(),s);}
-    @EventHandler public void chat(AsyncPlayerChatEvent e){CreateSession s=sessions.get(e.getPlayer().getUniqueId());if(s==null||!s.editing)return;e.setCancelled(true);String text=e.getMessage().trim();plugin.runPlayer(e.getPlayer(),()->{s.editing=false;if(!text.equalsIgnoreCase("cancel")){try{BigDecimal n=new BigDecimal(text);if(n.signum()<0||n.scale()>2)throw new NumberFormatException();s.money=n;plugin.message(e.getPlayer(),"<green>金币奖励已设置为 "+n.toPlainString()+"。</green>");}catch(NumberFormatException ex){plugin.message(e.getPlayer(),"<red>金额无效，只能输入不小于 0、最多两位小数的数字。</red>");}}decorateCreate(s);e.getPlayer().openInventory(s.inventory);});}
-    @EventHandler public void quit(PlayerQuitEvent e){CreateSession s=sessions.remove(e.getPlayer().getUniqueId());if(s!=null)returnItems(e.getPlayer(),s);}
-    private void submit(Player p,CreateSession s){
-        List<ItemStack> rewards=new ArrayList<>();for(int i=0;i<45;i++){ItemStack it=s.inventory.getItem(i);if(it!=null&&!it.getType().isAir())rewards.add(it.clone());}
-        if(rewards.isEmpty()&&s.money.signum()==0){plugin.message(p,"<red>请至少设置一种物品或金币奖励。</red>");return;}
-        try{s.submitting=true;byte[] encoded=ItemCodec.encode(rewards);service.create(p,s.money,encoded).thenAccept(msg->plugin.runPlayer(p,()->{boolean ok=msg.contains("创建成功");plugin.message(p,msg);if(ok){sessions.remove(p.getUniqueId());p.closeInventory();}else{s.submitting=false;}})).exceptionally(ex->{plugin.logError("创建邀请码失败",ex);plugin.runPlayer(p,()->{s.submitting=false;plugin.message(p,"<red>创建失败，请稍后重试。</red>");});return null;});}catch(Exception ex){s.submitting=false;plugin.message(p,"<red>奖励物品无法保存，请联系管理员。</red>");plugin.logError("序列化奖励失败",ex);}
+
+    public Inventory getInventory() {
+      return null;
     }
-    private void cancel(Player p,CreateSession s){if(sessions.remove(p.getUniqueId(),s)){returnItems(p,s);p.closeInventory();plugin.message(p,"<gray>已取消创建，奖励物品已返还。</gray>");}}
-    private void returnItems(Player p,CreateSession s){for(int i=0;i<45;i++){ItemStack it=s.inventory.getItem(i);if(it==null||it.getType().isAir())continue;p.getInventory().addItem(it).values().forEach(left->p.getWorld().dropItemNaturally(p.getLocation(),left));s.inventory.setItem(i,null);}}
-    public void shutdown(){for(Map.Entry<UUID,CreateSession> e:sessions.entrySet()){Player p=Bukkit.getPlayer(e.getKey());if(p!=null)returnItems(p,e.getValue());}sessions.clear();}
+  }
+
+  private static final class Session {
+    Inventory inventory;
+    BigDecimal money = BigDecimal.ZERO;
+    String code;
+    boolean funding;
+    boolean submitting;
+    volatile boolean input;
+  }
+
+  private final SakuraInvitePlugin plugin;
+  private final Map<UUID, Session> sessions = new ConcurrentHashMap<>();
+
+  public GuiManager(SakuraInvitePlugin plugin, InviteService ignored) {
+    this.plugin = plugin;
+  }
+
+  private boolean allowed(Player p) {
+    if (p.hasPermission("sakurainvite.create") && plugin.database().ready()) return true;
+    plugin.message(p, "<red>没有创建权限或数据库尚未就绪。</red>");
+    return false;
+  }
+
+  public void openCenter(Player p) {
+    if (!plugin.database().ready()) {
+      plugin.message(p, "<yellow>数据库尚未就绪。</yellow>");
+      return;
+    }
+    plugin
+        .database()
+        .dashboard(p.getUniqueId(), plugin.tasks())
+        .thenAccept(
+            d ->
+                plugin.runPlayer(
+                    p,
+                    () -> {
+                      Inventory inv =
+                          Bukkit.createInventory(
+                              new Holder(Kind.CENTER, p.getUniqueId()),
+                              45,
+                              MM.deserialize(plugin.getConfig().getString("gui.title", "樱花邀请中心")));
+                      fill(inv, 0);
+                      inv.setItem(
+                          10,
+                          item(
+                              Material.NAME_TAG,
+                              "<light_purple>我的邀请码",
+                              List.of(
+                                  d.ownCode() == null ? "<gray>尚未创建" : "<yellow>" + d.ownCode(),
+                                  "<gray>点击查看详情 / 创建")));
+                      List<String> lore = new ArrayList<>();
+                      for (TaskProgress t : d.tasks())
+                        lore.add(
+                            (t.complete() ? "<green>✔ " : "<yellow>• ")
+                                + t.name()
+                                + " "
+                                + Math.min(t.progress(), t.target())
+                                + "/"
+                                + t.target());
+                      if (lore.isEmpty()) lore.add("<gray>使用个人码后分配任务");
+                      inv.setItem(12, item(Material.WRITABLE_BOOK, "<aqua>成长任务", lore));
+                      inv.setItem(
+                          14,
+                          item(
+                              Material.BOOK,
+                              "<gold>邀请记录",
+                              List.of(
+                                  "<gray>已邀请：" + d.invitedCount(),
+                                  "<green>有效邀请：" + d.validCount(),
+                                  "<gray>点击查看聊天记录")));
+                      inv.setItem(
+                          16,
+                          item(
+                              Material.NETHER_STAR,
+                              "<yellow>排行榜",
+                              List.of(d.rank() == 0 ? "<gray>尚未上榜" : "<gray>你的排名 #" + d.rank())));
+                      inv.setItem(22, item(Material.CLOCK, "<aqua>刷新进度", List.of()));
+                      inv.setItem(
+                          31,
+                          item(
+                              Material.PLAYER_HEAD,
+                              "<light_purple>邀请关系",
+                              List.of(
+                                  d.inviterName() == null
+                                      ? "<gray>尚未绑定"
+                                      : "<gray>邀请人：" + d.inviterName())));
+                      inv.setItem(
+                          40, item(Material.CHEST, "<green>领取待发奖励", List.of("<gray>背包不足或离线时保留奖励")));
+                      p.openInventory(inv);
+                    }))
+        .exceptionally(
+            e -> {
+              plugin.logError("读取邀请中心失败", e);
+              return null;
+            });
+  }
+
+  public void openInfo(Player p) {
+    if (!plugin.database().ready()) return;
+    plugin
+        .database()
+        .ownCode(p.getUniqueId())
+        .thenAccept(
+            code -> {
+              if (code == null) {
+                plugin.runPlayer(
+                    p, () -> plugin.message(p, "<yellow>尚未创建，请 /invite create。</yellow>"));
+                return;
+              }
+              plugin
+                  .database()
+                  .stock(code.code())
+                  .thenAccept(
+                      stock ->
+                          plugin.runPlayer(
+                              p,
+                              () -> {
+                                Inventory inv =
+                                    Bukkit.createInventory(
+                                        new Holder(Kind.INFO, p.getUniqueId()),
+                                        54,
+                                        MM.deserialize("<light_purple>邀请码奖励详情"));
+                                try {
+                                  int i = 0;
+                                  for (ItemStack it : ItemCodec.decode(code.items()))
+                                    inv.setItem(i++, it.clone());
+                                } catch (Exception e) {
+                                  plugin.message(p, "<red>奖励读取失败，请联系管理员。</red>");
+                                  return;
+                                }
+                                fill(inv, 45);
+                                inv.setItem(45, item(Material.ARROW, "<yellow>返回", List.of()));
+                                inv.setItem(
+                                    48,
+                                    item(
+                                        Material.NAME_TAG,
+                                        "<yellow>" + code.code(),
+                                        List.of(
+                                            "<gray>点击在聊天中显示可复制的代码",
+                                            code.active() ? "<green>已启用" : "<red>已停用")));
+                                inv.setItem(
+                                    49,
+                                    item(
+                                        Material.GOLD_INGOT,
+                                        "<gold>补充一份奖励",
+                                        List.of(
+                                            "<gray>每份金币：" + code.money().toPlainString(),
+                                            "<gray>可供新绑定：" + stock + " 份",
+                                            "<gray>上方为每份所需物品模板")));
+                                inv.setItem(50, item(Material.CHEST, "<green>领取待发奖励", List.of()));
+                                inv.setItem(
+                                    51,
+                                    item(
+                                        Material.HOPPER,
+                                        "<yellow>退回一份未预留奖励",
+                                        List.of("<gray>已绑定预留的奖励不可取回")));
+                                p.openInventory(inv);
+                              }));
+            })
+        .exceptionally(
+            e -> {
+              plugin.logError("读取邀请码详情失败", e);
+              return null;
+            });
+  }
+
+  public void openCreate(Player p) {
+    if (!allowed(p)) return;
+    Session existing = sessions.get(p.getUniqueId());
+    if (existing != null) {
+      p.openInventory(existing.inventory);
+      return;
+    }
+    plugin
+        .database()
+        .ownCode(p.getUniqueId())
+        .thenAccept(
+            code ->
+                plugin.runPlayer(
+                    p,
+                    () -> {
+                      if (!allowed(p)) return;
+                      if (code != null) {
+                        openInfo(p);
+                        return;
+                      }
+                      openEditor(p, null);
+                    }));
+  }
+
+  public void openFund(Player p) {
+    if (!allowed(p)) return;
+    plugin
+        .database()
+        .ownCode(p.getUniqueId())
+        .thenAccept(
+            code ->
+                plugin.runPlayer(
+                    p,
+                    () -> {
+                      if (!allowed(p)) return;
+                      if (code == null) {
+                        plugin.message(p, "<yellow>请先 /invite create。</yellow>");
+                        return;
+                      }
+                      openEditor(p, code);
+                    }));
+  }
+
+  private void openEditor(Player p, InviteCode code) {
+    p.closeInventory();
+    Session s = new Session();
+    s.funding = code != null;
+    s.code = code == null ? plugin.service().randomCode() : code.code();
+    s.money = code == null ? BigDecimal.ZERO : code.money();
+    s.inventory =
+        Bukkit.createInventory(
+            new Holder(s.funding ? Kind.FUND : Kind.CREATE, p.getUniqueId()),
+            54,
+            MM.deserialize(s.funding ? "<light_purple>补充一份新人奖励" : "<light_purple>创建邀请码 · 每份奖励"));
+    if (code != null)
+      try {
+        int i = 0;
+        for (ItemStack it : ItemCodec.decode(code.items())) s.inventory.setItem(i++, it.clone());
+      } catch (Exception e) {
+        plugin.message(p, "<red>旧奖励无法解析，请联系管理员。</red>");
+        return;
+      }
+    sessions.put(p.getUniqueId(), s);
+    decorate(s);
+    p.openInventory(s.inventory);
+  }
+
+  private void decorate(Session s) {
+    fill(s.inventory, 45);
+    s.inventory.setItem(45, item(Material.ARROW, "<yellow>取消", List.of("<gray>模板不收物品，取消无需返还")));
+    s.inventory.setItem(
+        49,
+        item(
+            Material.GOLD_INGOT,
+            s.funding ? "<gold>每份金币（固定）" : "<gold>设置每份金币",
+            List.of("<gray>当前：" + s.money.toPlainString())));
+    s.inventory.setItem(
+        52,
+        item(
+            Material.LIME_DYE,
+            "<green>确认并从背包预存一份",
+            List.of("<gray>确认时扣除上方物品与金币", "<gray>绑定时预留一份，用完需再补充")));
+    s.inventory.setItem(
+        53,
+        item(
+            Material.PAPER,
+            "<aqua>上方均为模板复制品",
+            List.of(
+                s.funding ? "<gray>补充时使用原来的每份奖励" : "<gray>左键复制光标 / 主手物品，右键清空",
+                "<gray>确认前将光标物品放回背包")));
+  }
+
+  @EventHandler
+  public void click(InventoryClickEvent e) {
+    if (!(e.getWhoClicked() instanceof Player p)
+        || !(e.getView().getTopInventory().getHolder() instanceof Holder h)) return;
+    if (!h.owner.equals(p.getUniqueId())) {
+      e.setCancelled(true);
+      return;
+    }
+    if (h.kind == Kind.CENTER || h.kind == Kind.INFO) {
+      e.setCancelled(true);
+      if (e.getClickedInventory() != e.getView().getTopInventory()) return;
+      int slot = e.getSlot();
+      if (h.kind == Kind.CENTER)
+        switch (slot) {
+          case 10 -> openCreate(p);
+          case 14 -> plugin.showRecords(p);
+          case 16 -> plugin.showTop(p);
+          case 22 -> openCenter(p);
+          case 40 -> plugin.delivery().poll(p);
+          default -> {}
+        }
+      else
+        switch (slot) {
+          case 45 -> openCenter(p);
+          case 48 -> copyCode(p);
+          case 49 -> openFund(p);
+          case 50 -> plugin.delivery().poll(p);
+          case 51 ->
+              plugin
+                  .database()
+                  .withdrawUnused(p.getUniqueId(), p.getName())
+                  .whenComplete(
+                      (ok, error) ->
+                          plugin.runPlayer(
+                              p,
+                              () -> {
+                                plugin.message(
+                                    p,
+                                    error == null && Boolean.TRUE.equals(ok)
+                                        ? "<green>一份奖励已转入待领取退款。</green>"
+                                        : "<yellow>没有可退回库存，或操作失败。</yellow>");
+                                openInfo(p);
+                              }));
+          default -> {}
+        }
+      return;
+    }
+    Session s = sessions.get(p.getUniqueId());
+    if (s == null
+        || s.inventory != e.getView().getTopInventory()
+        || s.submitting
+        || !p.hasPermission("sakurainvite.create")) {
+      e.setCancelled(true);
+      return;
+    }
+    if (e.getClickedInventory() != e.getView().getTopInventory()) {
+      if (e.isShiftClick() || e.getAction() == InventoryAction.COLLECT_TO_CURSOR)
+        e.setCancelled(true);
+      return;
+    }
+    e.setCancelled(true);
+    int slot = e.getSlot();
+    if (slot < 45) {
+      if (!s.funding) {
+        if (e.isRightClick()) s.inventory.setItem(slot, null);
+        else if (e.isLeftClick()) {
+          ItemStack source = e.getCursor();
+          if (source == null || source.getType().isAir())
+            source = p.getInventory().getItemInMainHand();
+          s.inventory.setItem(slot, source.getType().isAir() ? null : source.clone());
+        }
+      }
+      return;
+    }
+    if (slot == 45) p.closeInventory();
+    else if (slot == 49 && !s.funding) {
+      s.input = true;
+      p.closeInventory();
+      plugin.message(p, "<yellow>请输入每份金币金额（最多 10 亿、两位小数），cancel 取消。</yellow>");
+    } else if (slot == 52) submit(p, s);
+  }
+
+  private void copyCode(Player p) {
+    plugin
+        .database()
+        .ownCode(p.getUniqueId())
+        .thenAccept(
+            c ->
+                plugin.runPlayer(
+                    p,
+                    () -> {
+                      if (c != null)
+                        p.sendMessage(
+                            Component.text("邀请码：" + c.code() + "（点击复制）")
+                                .clickEvent(ClickEvent.copyToClipboard(c.code())));
+                    }));
+  }
+
+  private void submit(Player p, Session s) {
+    if (s.submitting || !allowed(p)) return;
+    if (!p.getItemOnCursor().getType().isAir()) {
+      plugin.message(p, "<yellow>请先将光标物品放回背包。</yellow>");
+      return;
+    }
+    try {
+      List<ItemStack> rewards = new ArrayList<>();
+      for (int i = 0; i < 45; i++) {
+        ItemStack it = s.inventory.getItem(i);
+        if (it != null && !it.getType().isAir()) rewards.add(it.clone());
+      }
+      if (rewards.isEmpty() && s.money.signum() == 0) {
+        plugin.message(p, "<red>请设置至少一种奖励。</red>");
+        return;
+      }
+      Inventory after = Bukkit.createInventory(null, 36);
+      after.setContents(
+          Arrays.stream(p.getInventory().getStorageContents())
+              .map(i -> i == null ? null : i.clone())
+              .toArray(ItemStack[]::new));
+      if (!after
+          .removeItem(rewards.stream().map(ItemStack::clone).toArray(ItemStack[]::new))
+          .isEmpty()) {
+        plugin.message(p, "<red>背包中的奖励物品不足，请按模板补齐。</red>");
+        return;
+      }
+      byte[] data = ItemCodec.encode(rewards);
+      s.submitting = true;
+      boolean accepted =
+          plugin
+              .funding()
+              .begin(
+                  p,
+                  s.code,
+                  s.money,
+                  data,
+                  !s.funding,
+                  () -> {
+                    p.getInventory().setStorageContents(after.getContents());
+                    sessions.remove(p.getUniqueId(), s);
+                    p.closeInventory();
+                  });
+      if (!accepted) s.submitting = false;
+    } catch (Exception error) {
+      s.submitting = false;
+      plugin.logError("预存奖励失败", error);
+      plugin.message(p, "<red>奖励数据无效，未提交。</red>");
+    }
+  }
+
+  @EventHandler
+  public void drag(InventoryDragEvent e) {
+    if (e.getView().getTopInventory().getHolder() instanceof Holder) e.setCancelled(true);
+  }
+
+  @EventHandler
+  public void close(InventoryCloseEvent e) {
+    Session s = sessions.get(e.getPlayer().getUniqueId());
+    if (s != null && s.inventory == e.getInventory() && !s.input && !s.submitting)
+      sessions.remove(e.getPlayer().getUniqueId(), s);
+  }
+
+  @EventHandler
+  public void quit(PlayerQuitEvent e) {
+    sessions.remove(e.getPlayer().getUniqueId());
+    plugin.delivery().forget(e.getPlayer().getUniqueId());
+  }
+
+  @EventHandler
+  public void chat(AsyncPlayerChatEvent e) {
+    Session s = sessions.get(e.getPlayer().getUniqueId());
+    if (s == null || !s.input) return;
+    e.setCancelled(true);
+    String raw = e.getMessage().trim();
+    plugin.runPlayer(
+        e.getPlayer(),
+        () -> {
+          if (sessions.get(e.getPlayer().getUniqueId()) != s || !s.input) return;
+          s.input = false;
+          if (!allowed(e.getPlayer())) {
+            sessions.remove(e.getPlayer().getUniqueId(), s);
+            return;
+          }
+          try {
+            if (!raw.equalsIgnoreCase("cancel")) s.money = Amounts.parse(raw);
+          } catch (IllegalArgumentException error) {
+            plugin.message(e.getPlayer(), "<red>" + error.getMessage());
+          }
+          decorate(s);
+          e.getPlayer().openInventory(s.inventory);
+        });
+  }
+
+  private void fill(Inventory inv, int from) {
+    for (int i = from; i < inv.getSize(); i++)
+      inv.setItem(i, item(Material.PINK_STAINED_GLASS_PANE, " ", List.of()));
+  }
+
+  private ItemStack item(Material material, String title, List<String> lore) {
+    ItemStack stack = new ItemStack(material);
+    ItemMeta meta = stack.getItemMeta();
+    meta.itemName(MM.deserialize(title));
+    meta.lore(lore.stream().map(MM::deserialize).toList());
+    stack.setItemMeta(meta);
+    return stack;
+  }
+
+  public void shutdown() {
+    sessions.clear();
+  }
 }

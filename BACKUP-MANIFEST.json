@@ -1,20 +1,36 @@
 {
-  "date": "2026-11-13",
+  "date": "2026-11-15",
+  "version": "1.3.0",
   "files": [
     {
-      "path": ".gitignore",
-      "size": 92,
-      "sha256": "977a3de71e925073779294ed03e5bdfe0fd9ffef7aaa1f7222e0972f6765b45e"
+      "path": "README.md",
+      "size": 934,
+      "sha256": "5db3d52255a795039d857d14d2969ccec1dd2f56a5138022a4798fd562faeceb"
     },
     {
-      "path": "README.md",
-      "size": 802,
-      "sha256": "3f613ce6a70198f771514cb96b7c10e051914bdef946b683ca77740aed73a512"
+      "path": ".gitignore",
+      "size": 104,
+      "sha256": "96e2529aebc749e3386adf6a69375c7900ccc1629a77ba6b5377704055a0292f"
     },
     {
       "path": "source/build.gradle.kts",
-      "size": 1173,
-      "sha256": "e45f0ca7768aac46e36f33a0c61b6c9a458b094b0bb1312b0f162d7be0fe7b8a"
+      "size": 1472,
+      "sha256": "9f5b6115b08279f608ab290ba1dddf138313ea9cd93664ad1db4155a7ab07d9e"
+    },
+    {
+      "path": "source/CHANGELOG.md",
+      "size": 958,
+      "sha256": "76db570c2f12c5f6b946c1633f63b71e0ddc36eb39e2df1e0dbc38b345800f1e"
+    },
+    {
+      "path": "source/docs/使用与升级说明.md",
+      "size": 11925,
+      "sha256": "e4edb7eb000ef32dcba4b2da4ce022fc3b37de364b8e131cb600f20406ecad89"
+    },
+    {
+      "path": "source/gradle/wrapper/gradle-wrapper.properties",
+      "size": 250,
+      "sha256": "05e7bec397ce5a52628d31dcc4c8b636cbdc55e28f8cef19d097c71b5c5fbb42"
     },
     {
       "path": "source/gradlew",
@@ -23,13 +39,13 @@
     },
     {
       "path": "source/gradlew.bat",
-      "size": 2918,
-      "sha256": "bdecf875b6868cbcbd36a1f85eedf0832f358ff28092c5797ed645f7edce77d9"
+      "size": 2826,
+      "sha256": "95e8ae8e8a256a2f066cdd745d56f7a3fc87aa058a2e4beb483300db7171bd1f"
     },
     {
       "path": "source/README.md",
-      "size": 1091,
-      "sha256": "aecfa0933a17189879d3393fa76cc8c6778326326ab4001f10932bca5d0a9038"
+      "size": 2213,
+      "sha256": "25005b479bdffba840d4598571378a8b389eda62e1265200869ee230be3d00b7"
     },
     {
       "path": "source/settings.gradle.kts",
@@ -37,91 +53,114 @@
       "sha256": "b6684c3eab50d17f8f3c3191b616e8e446a9448456fd26a6d7fe2a25d3022a40"
     },
     {
-      "path": "source/src/main/resources/config.yml",
-      "size": 1461,
-      "sha256": "f93818950b113e98c43737aae2c1567e9469b3ea8c080dc5e7b7cef9b2c10703"
-    },
-    {
-      "path": "source/src/main/resources/plugin.yml",
-      "size": 618,
-      "sha256": "19dc0acf587b49fdbdfe54a43580a738f10561c0548b2f28c99641ecac2dfd0e"
-    },
-    {
-      "path": "source/src/main/resources/tasks.yml",
-      "size": 7434,
-      "sha256": "8048e025ec0be8c7eb9b46cd83a3741c7d953e8af6f78e0f1f1ad4a85404958c"
-    },
-    {
-      "path": "source/src/main/java/site/sakuragirl/sakurainvite/SakuraInvitePlugin.java",
-      "size": 4705,
-      "sha256": "b8c887291aa666a3c4fa0b5b6c07db006d8db0d61c6c91cb8b0b665d8ec3a383"
-    },
-    {
       "path": "source/src/main/java/site/sakuragirl/sakurainvite/command/InviteCommand.java",
-      "size": 5586,
-      "sha256": "c443907d6c59f5de059ce09124ce12c1c745bf07020872ddd9f8cf4979399100"
+      "size": 12510,
+      "sha256": "8ad7561e35aebc7f0dcfcfc6431d99e10c236d8a24baa4c1a25aa2bd3b1f2024"
     },
     {
       "path": "source/src/main/java/site/sakuragirl/sakurainvite/db/Database.java",
-      "size": 27888,
-      "sha256": "aec60de989b714031318ddd98d2f6ae4ae2b02b48b0565bac92cc6fbeea81cf0"
+      "size": 54747,
+      "sha256": "f404c8d93539933cb7be47431f4702485f757f229ffd7b33828729f9d2367b1a"
     },
     {
       "path": "source/src/main/java/site/sakuragirl/sakurainvite/gui/GuiManager.java",
-      "size": 9307,
-      "sha256": "532b9df2b622a15b248d54f62ae964a54ec586f3cda7e4b51a1cd4ed2a9e316a"
+      "size": 19553,
+      "sha256": "a7ee697e2c9666134e3327689ab59c93bb66b9c3e7a78361bb3401006d9e2569"
     },
     {
       "path": "source/src/main/java/site/sakuragirl/sakurainvite/gui/OfficialGuiManager.java",
-      "size": 12227,
-      "sha256": "e11e981b33b6bcd766f3f01f095f42eeb944bc264ac276462a7943f804748d4c"
+      "size": 14509,
+      "sha256": "d076069c3cd68b151886da13c93ddcd07714a46a9ac1bbf42e09e87d58333e6b"
     },
     {
       "path": "source/src/main/java/site/sakuragirl/sakurainvite/hook/EconomyHook.java",
-      "size": 1417,
-      "sha256": "720ab79f079c550ba2ba33253366e3ae6af66d0889157abdc20ad191578efc5d"
+      "size": 2536,
+      "sha256": "29c509dc0298cd1a2b984764ee502e577437bd8ab9b5c51313e9f3f8759f491b"
     },
     {
       "path": "source/src/main/java/site/sakuragirl/sakurainvite/hook/PlaceholderHook.java",
-      "size": 1922,
-      "sha256": "f74043071ff7e6e62ccffc517bcb156371dfe61aef8a588759801aa5f2131bf8"
+      "size": 2801,
+      "sha256": "33c3444b5b112c749ad09333da22c3ff8335f929cad493b05487d549e8fe56c2"
     },
     {
       "path": "source/src/main/java/site/sakuragirl/sakurainvite/listener/ProgressListener.java",
-      "size": 2063,
-      "sha256": "4c06c24d887474fcf405ecec5330db655cad4b74f68e213602a5b11797ec7953"
+      "size": 4450,
+      "sha256": "795ff1bbfb0a56c85dedb77f94cf2bbf5fe62466280da65d764f9459245b94ac"
     },
     {
       "path": "source/src/main/java/site/sakuragirl/sakurainvite/model/Models.java",
-      "size": 1744,
-      "sha256": "d8c417f5036594be2ca1ae32e721c901c7a0e2dc2f02ec0b0e9294cc4156f7d7"
+      "size": 1861,
+      "sha256": "97310734f23bbb899bdb6bfb7053c6217bc66939babc92b8f32ff0cf6c1c61dd"
+    },
+    {
+      "path": "source/src/main/java/site/sakuragirl/sakurainvite/SakuraInvitePlugin.java",
+      "size": 8440,
+      "sha256": "2f5949f38cbe5c0456af1afd00ecc83118e37517b27f3655fb06bcaacd5b480f"
+    },
+    {
+      "path": "source/src/main/java/site/sakuragirl/sakurainvite/service/DeliveryService.java",
+      "size": 7218,
+      "sha256": "d11b201ecf415815e4dfb6c80e0b073aa1d9ada5ca1d50a1064a1632809a8ad5"
+    },
+    {
+      "path": "source/src/main/java/site/sakuragirl/sakurainvite/service/FundingService.java",
+      "size": 8462,
+      "sha256": "197166e4e412576f6c4759136e2eecfd2bf36f088d009ff3fa2eb72b93bc907e"
     },
     {
       "path": "source/src/main/java/site/sakuragirl/sakurainvite/service/InviteService.java",
-      "size": 8595,
-      "sha256": "1dbf2546425f17d3a0fb293fac6d773419d2bfd46eecf479a4fc3d5676228321"
+      "size": 7910,
+      "sha256": "0e84c27948c9914c06137d1822647989dbe948c80e14701cac95f9dd9b1fda74"
     },
     {
       "path": "source/src/main/java/site/sakuragirl/sakurainvite/task/TaskRegistry.java",
-      "size": 2210,
-      "sha256": "0a0e1d6c1bbc2a5d1a83b5661edbfccb8e637cb62c144314757cdffca9f02f85"
+      "size": 2986,
+      "sha256": "e2114afe70794a386c5b4233def6c96b5ae9ff426ef9af26e8de4292fbf10db6"
+    },
+    {
+      "path": "source/src/main/java/site/sakuragirl/sakurainvite/util/Amounts.java",
+      "size": 966,
+      "sha256": "c5e53cd8d2cd93ad7f181f8496834b21e31529d9c7a91bd264e7b918863ec539"
     },
     {
       "path": "source/src/main/java/site/sakuragirl/sakurainvite/util/ItemCodec.java",
-      "size": 1193,
-      "sha256": "48b8beb1bd5ae1855afee598d0fb52316d960ee337d9ec2ad9fbc512df957de0"
+      "size": 2819,
+      "sha256": "bf7ebedaf281c7e59282d387e27111a96d2a18b07e002f64d4122dc53f670997"
     },
     {
-      "path": "source/gradle/wrapper/gradle-wrapper.properties",
-      "size": 250,
-      "sha256": "05e7bec397ce5a52628d31dcc4c8b636cbdc55e28f8cef19d097c71b5c5fbb42"
-    }
-  ],
-  "redactions": [
-    {
-      "project": "sakura-invite",
       "path": "source/src/main/resources/config.yml",
-      "count": 1
+      "size": 1734,
+      "sha256": "1c66f46925940d4f5810acca28cb44e0571927abdd7a76c0e29bf0bc02e29f29"
+    },
+    {
+      "path": "source/src/main/resources/plugin.yml",
+      "size": 683,
+      "sha256": "6b264220f6a347264a391bfebf4b2d2e91b8b088d62c6c72cdd5839e398647b5"
+    },
+    {
+      "path": "source/src/main/resources/tasks.yml",
+      "size": 7470,
+      "sha256": "35bf9c811a3abc7fd8a67a2e40ec1755e45f6ad0e84c8449c1feef2b7ea2687c"
+    },
+    {
+      "path": "source/src/test/java/site/sakuragirl/sakurainvite/AmountsTest.java",
+      "size": 987,
+      "sha256": "b1934ced95cf5ca8259a487a581edcaf3c37273de1d1f63c48666550555665e0"
+    },
+    {
+      "path": "source/src/test/java/site/sakuragirl/sakurainvite/DatabaseTest.java",
+      "size": 11023,
+      "sha256": "120e037f2f5503be577f6488dd75d657da0e6298547969de5b2b046f6782fd48"
+    },
+    {
+      "path": "source/src/test/java/site/sakuragirl/sakurainvite/GuiSafetyTest.java",
+      "size": 4528,
+      "sha256": "dea3bea103c57003f22a48d7d0ad3e954fbb6a78150bfba4506718b018e0e933"
+    },
+    {
+      "path": "source/src/test/java/site/sakuragirl/sakurainvite/MigrationTest.java",
+      "size": 3070,
+      "sha256": "3eaf193774255724ca2910c795a20dc114b598b084e539608700584c06f6c650"
     }
   ]
 }

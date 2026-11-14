@@ -252,37 +252,37 @@ tasks:
     targets: [NETHERRACK]
     name: "挖掘 80 个下界岩"
 
-  # ==================== 种植任务（43-47） ====================
+  # ==================== 成熟收获任务（43-47） ====================
   plant_wheat_30:
     enabled: true
     type: PLANT
     target: 30
     targets: [WHEAT]
-    name: "种植 30 株小麦"
+    name: "收获成熟 30 株小麦"
   plant_carrot_potato_30:
     enabled: true
     type: PLANT
     target: 30
     targets: [CARROTS, POTATOES]
-    name: "种植 30 株胡萝卜或马铃薯"
+    name: "收获成熟 30 株胡萝卜或马铃薯"
   plant_beetroot_25:
     enabled: true
     type: PLANT
     target: 25
     targets: [BEETROOTS]
-    name: "种植 25 株甜菜根"
+    name: "收获成熟 25 株甜菜根"
   plant_nether_wart_25:
     enabled: true
     type: PLANT
     target: 25
     targets: [NETHER_WART]
-    name: "种植 25 株下界疣"
+    name: "收获成熟 25 株下界疣"
   plant_any_50:
     enabled: true
     type: PLANT
     target: 50
     targets: [WHEAT, CARROTS, POTATOES, BEETROOTS, NETHER_WART, COCOA, MELON_STEM, PUMPKIN_STEM]
-    name: "种植任意 50 株作物"
+    name: "收获成熟任意 50 株作物"
 
   # ==================== 钓鱼任务（48-50） ====================
   fish_5:
