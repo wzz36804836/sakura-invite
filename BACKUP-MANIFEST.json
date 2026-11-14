@@ -3,19 +3,19 @@
   "version": "1.3.0",
   "files": [
     {
-      "path": "README.md",
-      "size": 934,
-      "sha256": "5db3d52255a795039d857d14d2969ccec1dd2f56a5138022a4798fd562faeceb"
-    },
-    {
       "path": ".gitignore",
       "size": 104,
       "sha256": "96e2529aebc749e3386adf6a69375c7900ccc1629a77ba6b5377704055a0292f"
     },
     {
-      "path": "source/build.gradle.kts",
-      "size": 1472,
-      "sha256": "9f5b6115b08279f608ab290ba1dddf138313ea9cd93664ad1db4155a7ab07d9e"
+      "path": "LICENSE",
+      "size": 1068,
+      "sha256": "e0859d8347151ef046b6d3d540596ec5e996d84bf96b5b691aad31f68438dd06"
+    },
+    {
+      "path": "README.md",
+      "size": 1643,
+      "sha256": "ebc3c7dd9998d83cd7d9b99ff13cc733f1449abf67b81bf86033e1e392503e04"
     },
     {
       "path": "source/CHANGELOG.md",
@@ -23,9 +23,29 @@
       "sha256": "76db570c2f12c5f6b946c1633f63b71e0ddc36eb39e2df1e0dbc38b345800f1e"
     },
     {
+      "path": "source/LICENSE",
+      "size": 1068,
+      "sha256": "e0859d8347151ef046b6d3d540596ec5e996d84bf96b5b691aad31f68438dd06"
+    },
+    {
+      "path": "source/README.md",
+      "size": 2246,
+      "sha256": "6cde8b162a83943ce828b92405e8d30fb73865bd06cb49d226780872df9ad374"
+    },
+    {
+      "path": "source/build.gradle.kts",
+      "size": 1472,
+      "sha256": "9f5b6115b08279f608ab290ba1dddf138313ea9cd93664ad1db4155a7ab07d9e"
+    },
+    {
       "path": "source/docs/使用与升级说明.md",
       "size": 11925,
       "sha256": "e4edb7eb000ef32dcba4b2da4ce022fc3b37de364b8e131cb600f20406ecad89"
+    },
+    {
+      "path": "source/docs/插件介绍.md",
+      "size": 9571,
+      "sha256": "72b60d5c6f7251b8c80befae52b68c86e8e96f0b4a863fd3e5e49a5fc1a542b8"
     },
     {
       "path": "source/gradle/wrapper/gradle-wrapper.properties",
@@ -43,14 +63,14 @@
       "sha256": "95e8ae8e8a256a2f066cdd745d56f7a3fc87aa058a2e4beb483300db7171bd1f"
     },
     {
-      "path": "source/README.md",
-      "size": 2213,
-      "sha256": "25005b479bdffba840d4598571378a8b389eda62e1265200869ee230be3d00b7"
-    },
-    {
       "path": "source/settings.gradle.kts",
       "size": 34,
       "sha256": "b6684c3eab50d17f8f3c3191b616e8e446a9448456fd26a6d7fe2a25d3022a40"
+    },
+    {
+      "path": "source/src/main/java/site/sakuragirl/sakurainvite/SakuraInvitePlugin.java",
+      "size": 8440,
+      "sha256": "2f5949f38cbe5c0456af1afd00ecc83118e37517b27f3655fb06bcaacd5b480f"
     },
     {
       "path": "source/src/main/java/site/sakuragirl/sakurainvite/command/InviteCommand.java",
@@ -91,11 +111,6 @@
       "path": "source/src/main/java/site/sakuragirl/sakurainvite/model/Models.java",
       "size": 1861,
       "sha256": "97310734f23bbb899bdb6bfb7053c6217bc66939babc92b8f32ff0cf6c1c61dd"
-    },
-    {
-      "path": "source/src/main/java/site/sakuragirl/sakurainvite/SakuraInvitePlugin.java",
-      "size": 8440,
-      "sha256": "2f5949f38cbe5c0456af1afd00ecc83118e37517b27f3655fb06bcaacd5b480f"
     },
     {
       "path": "source/src/main/java/site/sakuragirl/sakurainvite/service/DeliveryService.java",

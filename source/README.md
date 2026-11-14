@@ -30,4 +30,4 @@
 
 Java 21，Gradle 8.8。20 项 JUnit 回归测试覆盖金额、SQLite 迁移、有限库存、幂等预存/退款、并发绑定、官方码限制、发奖恢复及菜单保护。尚未完成实际 Paper、MySQL、Vault/XConomy 和 CraftEngine 联动测试；不保证外部经济或命令跨系统严格只执行一次，异常部分执行需人工核对。
 
-作者：Sakura_Girl。原作者许可保持不变。
+作者：Sakura_Girl。项目采用 MIT License，第三方依赖保留各自许可。
